@@ -1,4 +1,5 @@
 import { Plugin } from '../core/interfaces/highlite/plugin/plugin.class';
+import { SettingsTypes } from '../core/interfaces/highlite/plugin/pluginSettings.interface';
 import { PanelManager } from '../core/managers/highlite/panelManager';
 import {
     getEquipmentTypeName,
@@ -30,6 +31,22 @@ export class DefinitionsPanel extends Plugin {
     private spriteReferences: Map<string, number> = new Map(); // Track sprite URL usage count
     private spriteContexts: Map<string, Set<string>> = new Map(); // Track which contexts use each URL
     private activeSpriteUrls: Set<string> = new Set(); // Track URLs we've created
+
+    constructor() {
+        super();
+        this.settings.exportItemMappings = {
+            text: 'Export Item Mappings to JSON',
+            type: SettingsTypes.button,
+            value: '',
+            callback: () => this.exportItemMappings(),
+        };
+        this.settings.exportAllMappings = {
+            text: 'Export All Mappings (Items + NPCs) to JSON',
+            type: SettingsTypes.button,
+            value: '',
+            callback: () => this.exportAllMappings(),
+        };
+    }
 
     init(): void {
         this.log('Definitions Panel initialized');
@@ -4862,5 +4879,106 @@ export class DefinitionsPanel extends Plugin {
         this.spriteReferences.clear();
         this.spriteContexts.clear();
         this.activeSpriteUrls.clear();
+    }
+
+    /**
+     * Export all item mappings to a JSON file
+     */
+    private exportItemMappings(): void {
+        try {
+            // Ensure items are loaded
+            if (!this.itemsLoaded) {
+                this.loadAllItems();
+            }
+
+            if (this.allItems.length === 0) {
+                this.warn('No items loaded to export');
+                return;
+            }
+
+            // Create a simple mapping object: id -> name
+            const itemMappings: { [key: string]: string } = {};
+            
+            this.allItems.forEach((item) => {
+                if (item && item._id !== undefined) {
+                    itemMappings[item._id.toString()] = item._name || 'Unknown Item';
+                }
+            });
+
+            // Convert to JSON string with pretty formatting
+            const jsonString = JSON.stringify(itemMappings, null, 2);
+
+            // Create and download the file
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `item-mappings-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            this.log(`Exported ${Object.keys(itemMappings).length} item mappings to JSON`);
+        } catch (error) {
+            this.error(`Failed to export item mappings: ${error}`);
+        }
+    }
+
+    /**
+     * Export all mappings (items and NPCs) to a JSON file
+     */
+    private exportAllMappings(): void {
+        try {
+            // Ensure both items and NPCs are loaded
+            if (!this.itemsLoaded) {
+                this.loadAllItems();
+            }
+            if (!this.npcsLoaded) {
+                this.loadAllNpcs();
+            }
+
+            // Create simple mapping objects: id -> name
+            const itemMappings: { [key: string]: string } = {};
+            const npcMappings: { [key: string]: string } = {};
+            
+            // Process items
+            this.allItems.forEach((item) => {
+                if (item && item._id !== undefined) {
+                    itemMappings[item._id.toString()] = item._name || 'Unknown Item';
+                }
+            });
+
+            // Process NPCs
+            this.allNpcs.forEach((npc) => {
+                if (npc && npc._id !== undefined) {
+                    npcMappings[npc._id.toString()] = npc._name || 'Unknown NPC';
+                }
+            });
+
+            // Create export data
+            const exportData = {
+                items: itemMappings,
+                npcs: npcMappings
+            };
+
+            // Convert to JSON string with pretty formatting
+            const jsonString = JSON.stringify(exportData, null, 2);
+
+            // Create and download the file
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `all-mappings-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            this.log(`Exported ${Object.keys(itemMappings).length} items and ${Object.keys(npcMappings).length} NPCs to JSON`);
+        } catch (error) {
+            this.error(`Failed to export all mappings: ${error}`);
+        }
     }
 }
