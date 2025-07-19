@@ -14,14 +14,14 @@ export class UnofficialIron extends Plugin {
     private isLoggedIn = false;
     private currentUsername = '';
     
-    // Store default values for settings
+     // Default values for plugin settings
     private defaultSettings = {
         sendRecieveData: false,
         isIron: false,
         isUltimate: false,
         isHardcore: false,
         groupNames: '',
-        manualUpdate: false,
+        updateButton: false, 
         uuid: '',
         hasDied: false // Track if user has died in hardcore mode
     };
@@ -99,9 +99,9 @@ export class UnofficialIron extends Plugin {
         this.settings.updateButton = {
             text: 'Update Status',
             type: SettingsTypes.button,
-            value: this.defaultSettings.manualUpdate,
+            value: this.defaultSettings.updateButton,
             callback: () => {
-                //TODO: Manually call get and post logic to DB
+                // TODO: Manually call get and post logic to DB
             },
         };
 
@@ -121,8 +121,6 @@ export class UnofficialIron extends Plugin {
             hidden: true, // Always hidden from UI
         };
         
-        // Initially hide all settings except login message
-        this.updateSettingsVisibility();
     }
 
     init(): void {
@@ -131,7 +129,6 @@ export class UnofficialIron extends Plugin {
 
     start(): void {
         this.log('Unofficial Iron plugin started');
-        this.updateSettingsVisibility();
     }
 
     stop(): void {
@@ -149,13 +146,13 @@ export class UnofficialIron extends Plugin {
             this.settings.sendRecieveData.hidden = false;
             this.settings.isIron.hidden = false;
             // Ensure bottom 4 options are shown if iron is enabled
-            const ironEnabled = this.settings.isIron.value === true;
+            const ironEnabled = Boolean(this.settings.isIron.value);
             this.settings.isUltimate.hidden = !ironEnabled;
             this.settings.isHardcore.hidden = !ironEnabled;
             this.settings.groupNames.hidden = !ironEnabled;
             this.settings.updateButton.hidden = !ironEnabled;
         } else {
-            // Hide iron settings, show login message
+            // Hide all settings except login message
             this.settings.loginMessage.hidden = false;
             this.settings.alertMessage.hidden = true;
             this.settings.disclaimerMessage.hidden = true;
@@ -262,7 +259,7 @@ export class UnofficialIron extends Plugin {
         this.settings.isUltimate.value = this.defaultSettings.isUltimate;
         this.settings.isHardcore.value = this.defaultSettings.isHardcore;
         this.settings.groupNames.value = this.defaultSettings.groupNames;
-        this.settings.updateButton.value = this.defaultSettings.manualUpdate;
+        this.settings.updateButton.value = this.defaultSettings.updateButton;
         this.settings.uuid.value = this.defaultSettings.uuid;
         this.settings.hasDied.value = this.defaultSettings.hasDied;
 
@@ -385,17 +382,20 @@ export class UnofficialIron extends Plugin {
 
 
 
-//TODO:
-// POST to database function, called every 5 minutes while logged in and showing helms is true. 
-// -Also called on death (after updating settings). 
-// -Called with manual button too that puts it in 5 min cooldown
-// send all settings to the database, including uuid as key
-// 
-// GET from database function, called every 5 minutes while logged in and show helms is true
-// get call to database, returns a list of usernames and their iron status (IM, HCIM, UIM, HCUIM, GIM, HCCGIM, UGIM, HCUGIM
-// different helmet icon and colour per iron status:
-// - regular irons = full helm // group irons = med helm. 
-// - iron = iron // hardcore = pig iron // ultimate = silver // hcuim = palladium
-//
-// insert helmet next to username in chat for player
-// look at incoming chat messages, if player is in the list of irons, insert helmet next to their name based on the above rules
+/*
+TODO:
+POST to database function, called every 5 minutes while logged in and showing helms is true.
+- Also called on death (after updating settings).
+- Called with manual button too that puts it in 5 min cooldown
+- Send all settings to the database, including uuid as key
+
+GET from database function, called every 5 minutes while logged in and show helms is true
+- Get call to database, returns a list of usernames and their iron status (IM, HCIM, UIM, HCUIM, GIM, HCCGIM, UGIM, HCUGIM)
+- Different helmet icon and colour per iron status:
+  - regular irons = full helm // group irons = med helm
+  - iron = iron // hardcore = pig iron // ultimate = silver // hcuim = palladium
+- Store list
+- Insert helmet next to username in chat for player
+
+Look at incoming chat messages, if player is in the stored list of irons, insert helmet next to their name based on the above rules
+*/
