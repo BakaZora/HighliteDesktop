@@ -3,7 +3,7 @@ import { SettingsTypes } from '../core/interfaces/highlite/plugin/pluginSettings
 import { DatabaseManager } from '../core/managers/highlite/databaseManager';
 
 export class UnofficialIron extends Plugin {
-    pluginName = 'Unofficial Iron';
+    pluginName = 'Iron (Unofficial)';
     author = 'Zora';
     
     // Database configuration
